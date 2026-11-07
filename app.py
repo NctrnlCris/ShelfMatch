@@ -394,7 +394,13 @@ button[kind="primary"] {
 # Display helpers
 # ------------------------------------------------------------
 
-def render_hero(results=False):
+def render_hero(results=True):
+    st.info(
+    "Recommendations currently use your selected favourite books "
+    "and historical reader ratings. Genre preferences, optional "
+    "ratings, and branch availability are not connected yet. "
+    "Check the VPL catalogue for live holdings."
+    )
     if results:
         eyebrow = "YOUR READING SHORTLIST"
         first_line = "Your next"

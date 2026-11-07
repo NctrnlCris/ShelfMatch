@@ -1,122 +1,41 @@
+
 from functools import lru_cache
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
-"""
-ShelfMatch backend placeholders.
+from scipy.sparse import load_npz
 
-These functions return fixed demo results. Replace the TODO sections
-with your book-search and recommendation implementations.
 
-Expected book format:
-{
-    "id": "unique-book-id",
-    "title": "Book title",
-    "author": "Author name",
-    "genres": ["Fantasy"],
-    "catalogue_url": None,  # Optional direct catalogue record URL
-}
-"""
+ROOT = Path(__file__).resolve().parent
 
+DEMO_MODE = False
 
 
 @lru_cache(maxsize=1)
 def load_books():
-    books = pd.read_csv("data/raw/books.csv")
+    books = pd.read_csv(
+        ROOT / "data" / "raw" / "books.csv",
+        usecols=["book_id", "title", "authors"]
+    )
+
+    books["title"] = books["title"].fillna("")
+    books["authors"] = books["authors"].fillna("")
+
     return books
 
-DEMO_MODE = True
 
-
-DEMO_BOOKS = [
-    {
-        "id": "book-1",
-        "title": "The Midnight Library",
-        "author": "Matt Haig",
-        "genres": ["Fantasy", "Literary fiction"],
-        "catalogue_url": None,
-    },
-    {
-        "id": "book-2",
-        "title": "Project Hail Mary",
-        "author": "Andy Weir",
-        "genres": ["Science fiction", "Adventure"],
-        "catalogue_url": None,
-    },
-    {
-        "id": "book-3",
-        "title": "The Hobbit",
-        "author": "J.R.R. Tolkien",
-        "genres": ["Fantasy", "Adventure"],
-        "catalogue_url": None,
-    },
-    {
-        "id": "book-4",
-        "title": "Educated",
-        "author": "Tara Westover",
-        "genres": ["Memoir", "Nonfiction"],
-        "catalogue_url": None,
-    },
-    {
-        "id": "book-5",
-        "title": "Dune",
-        "author": "Frank Herbert",
-        "genres": ["Science fiction", "Adventure"],
-        "catalogue_url": None,
-    },
-    {
-        "id": "book-6",
-        "title": "The Song of Achilles",
-        "author": "Madeline Miller",
-        "genres": ["Fantasy", "Romance"],
-        "catalogue_url": None,
-    },
-]
-
-
-DEMO_RECOMMENDATIONS = [
-    {
-        "id": "result-1",
-        "title": "The House in the Cerulean Sea",
-        "author": "TJ Klune",
-        "genres": ["Fantasy", "Romance"],
-        "reason": "A fixed demo recommendation.",
-        "availability": None,
-        "catalogue_url": None,
-    },
-    {
-        "id": "result-2",
-        "title": "Station Eleven",
-        "author": "Emily St. John Mandel",
-        "genres": ["Science fiction", "Literary fiction"],
-        "reason": "A fixed demo recommendation.",
-        "availability": None,
-        "catalogue_url": None,
-    },
-    {
-        "id": "result-3",
-        "title": "The Thursday Murder Club",
-        "author": "Richard Osman",
-        "genres": ["Mystery", "Thriller"],
-        "reason": "A fixed demo recommendation.",
-        "availability": None,
-        "catalogue_url": None,
-    },
-]
+@lru_cache(maxsize=1)
+def load_model():
+    return load_npz(
+        ROOT / "models" / "item_user.npz"
+    ).tocsr()
 
 
 def search_books(query: str) -> list[dict]:
-    """
-    Search for books by title or author.
-
-    TODO: Replace the demo search with your backend search.
-
-    Return a list of book dictionaries using the format above.
-    Make sure each book has a stable, unique ID.
-    """
     query = query.strip().casefold()
 
-    if len(query) < 3:
+    if len(query) < 2:
         return []
 
     books = load_books()
@@ -129,20 +48,20 @@ def search_books(query: str) -> list[dict]:
         books["authors"].str.casefold().str.contains(
             query, regex=False
         )
-    ].sort_values("ratings_count").head(20)
+    ].head(20)
 
-    results = []
-
-    for row in matches.itertuples(index=False):
-        results.append({
+    return [
+        {
             "id": str(row.book_id),
             "title": row.title,
             "author": row.authors,
             "genres": [],
             "catalogue_url": None
-        })
+        }
+        for row in matches.itertuples(index=False)
+    ]
 
-    return results
+
 
 def get_recommendations(
     favourites: list[dict],
@@ -150,27 +69,70 @@ def get_recommendations(
     branch: str,
     priority: str,
 ) -> list[dict]:
-    """
-    Return recommendations for the selected preferences.
 
-    favourites:
-        Selected book dictionaries with an additional "rating" field.
-        The rating is None or an integer from 1 to 5.
+    matrix = load_model()
+    books = load_books().set_index("book_id")
 
-    genres:
-        Zero to three selected genres.
+    # Convert selected book IDs to matrix indices.
+    indices = np.array(
+        [int(book["id"]) - 1 for book in favourites]
+    )
 
-    branch:
-        The selected library branch.
+    # Compare all books against selected favourites.
+    similarities = matrix @ matrix[indices].T
 
-    priority:
-        "best_matches" or "available".
+    # Average similarity across the favourites.
+    scores = np.asarray(
+        similarities.mean(axis=1)
+    ).ravel()
 
-    TODO: Connect your recommendation function here.
+    # Exclude the selected books.
+    scores[indices] = -np.inf
 
-    TODO: Connect real branch availability here when you implement it.
-    This placeholder does not simulate availability.
+    # Sort ALL candidates by similarity.
+    ranked_indices = np.argsort(scores)[::-1]
 
-    TODO: Return direct VPL catalogue record URLs when available.
-    """
-    return [book.copy() for book in DEMO_RECOMMENDATIONS]
+    recommendations = []
+    seen_authors = set()
+
+    for index in ranked_indices:
+
+        # Scores are in descending order.
+        # Stop when there is no positive similarity.
+        if scores[index] <= 0:
+            break
+
+        book_id = int(index) + 1
+        book = books.loc[book_id]
+
+        title = str(book["title"])
+        author = str(book["authors"])
+
+        # Normalize the main author's name.
+        author_key = author.split(",")[0].strip().casefold()
+
+        # Skip duplicate authors.
+        if author_key in seen_authors:
+            continue
+
+        recommendations.append({
+            "id": str(book_id),
+            "title": title,
+            "author": author,
+            "genres": [],
+            "reason": (
+                "Readers who enjoyed your favourite books "
+                "also enjoyed this title."
+            ),
+            "availability": (
+                "Branch availability not connected yet."
+            ),
+            "catalogue_url": None
+        })
+
+        seen_authors.add(author_key)
+
+        if len(recommendations) == 10:
+            break
+
+    return recommendations
