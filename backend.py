@@ -1,3 +1,7 @@
+from functools import lru_cache
+from pathlib import Path
+
+import pandas as pd
 """
 ShelfMatch backend placeholders.
 
@@ -13,6 +17,13 @@ Expected book format:
     "catalogue_url": None,  # Optional direct catalogue record URL
 }
 """
+
+
+
+@lru_cache(maxsize=1)
+def load_books():
+    books = pd.read_csv("data/raw/books.csv")
+    return books
 
 DEMO_MODE = True
 
@@ -105,15 +116,33 @@ def search_books(query: str) -> list[dict]:
     """
     query = query.strip().casefold()
 
-    if not query:
+    if len(query) < 3:
         return []
 
-    return [
-        book.copy()
-        for book in DEMO_BOOKS
-        if query in f"{book['title']} {book['author']}".casefold()
-    ]
+    books = load_books()
 
+    matches = books[
+        books["title"].str.casefold().str.contains(
+            query, regex=False
+        )
+        |
+        books["authors"].str.casefold().str.contains(
+            query, regex=False
+        )
+    ].sort_values("ratings_count").head(20)
+
+    results = []
+
+    for row in matches.itertuples(index=False):
+        results.append({
+            "id": str(row.book_id),
+            "title": row.title,
+            "author": row.authors,
+            "genres": [],
+            "catalogue_url": None
+        })
+
+    return results
 
 def get_recommendations(
     favourites: list[dict],

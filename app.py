@@ -636,8 +636,8 @@ if st.session_state.view == "preferences":
                 st.session_state.search_results = []
                 st.session_state.search_complete = False
 
-                if len(query.strip()) < 2:
-                    st.warning("Enter at least two characters.")
+                if len(query.strip()) < 3:
+                    st.warning("Enter at least three characters.")
                 else:
                     try:
                         with st.spinner("Searching books…"):
