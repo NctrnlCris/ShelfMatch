@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 # ------------------------------------------------------------
 
 
+MAX_FAVOURITES = 20
+
 # TODO: Replace with branch names/IDs from your backend if needed.
 BRANCHES = [
     "Central Library",
@@ -69,7 +71,7 @@ for key, default in DEFAULTS.items():
 
 
 def add_favourite(book):
-    if len(st.session_state.favourites) < 5:
+    if len(st.session_state.favourites) < MAX_FAVOURITES:
         st.session_state.favourites[book["id"]] = deepcopy(book)
 
 
@@ -730,7 +732,7 @@ if st.session_state.view == "preferences":
             section_heading(
                 "01",
                 "What books have you enjoyed?",
-                "Select 3–5 books you loved."
+                f"Select at least 3 books you loved, up to {MAX_FAVOURITES}."
             )
 
             with st.form("book_search", border=False):
@@ -783,7 +785,7 @@ if st.session_state.view == "preferences":
                         key=f"add_{book['id']}",
                         disabled=(
                             added
-                            or len(st.session_state.favourites) >= 5
+                            or len(st.session_state.favourites) >= MAX_FAVOURITES
                         ),
                         on_click=add_favourite,
                         args=(book,),
@@ -791,13 +793,21 @@ if st.session_state.view == "preferences":
                     )
 
             count = len(st.session_state.favourites)
-            st.markdown(f"**Your favourites · {count}/5**")
-            st.progress(count / 5)
+            st.markdown(f"**Your favourites · {count}/{MAX_FAVOURITES}**")
+            st.progress(count / MAX_FAVOURITES)
             if 0 < count < 3:
                 remaining = 3 - count
                 st.caption(f"Add {remaining} more to get recommendations.")
+            elif count >= MAX_FAVOURITES:
+                st.caption(
+                    f"You’ve selected {MAX_FAVOURITES} books. Your reading list is ready. "
+                    "Remove a book if you’d like to add another."
+                )
             elif count >= 3:
-                st.caption("Your reading list is ready. You can select up to five books.")
+                st.caption(
+                    "Your reading list is ready. "
+                    f"You can add more favourites, up to {MAX_FAVOURITES} in total."
+                )
 
             if count == 0:
                 st.caption("Search above to start your list.")
