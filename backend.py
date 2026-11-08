@@ -9,7 +9,6 @@ from scipy.sparse import load_npz
 
 ROOT = Path(__file__).resolve().parent
 
-DEMO_MODE = False
 
 
 @lru_cache(maxsize=1)
@@ -62,7 +61,7 @@ def book_genre_lookup():
 def search_books(query: str) -> list[dict]:
     query = query.strip().casefold()
 
-    if len(query) < 2:
+    if len(query) < 3:
         return []
 
     books = load_books()
@@ -239,19 +238,13 @@ def get_recommendations(
         # 8. Construct the recommendation dictionary.
         recommendations.append({
             "id": str(book_id),
-            "recommendation_score": float(scores[index]),
             "match_score": float(100.0 * scores[index] / best_score) if best_score else 0.0,
             "title": title,
             "author": author,
             "genres": book_genre_lookup().get(book_id, []),
-            "reason": (
-                "Readers who enjoyed your favourite books "
-                "also enjoyed this title."
-            ),
             "available_copies": available,
             "total_copies": total,
-            "vpl_available_copies": vpl_available,
-            "catalogue_url": None,
+            "vpl_available_copies": vpl_available
         })
 
         # Prevent recommending another book by this author.

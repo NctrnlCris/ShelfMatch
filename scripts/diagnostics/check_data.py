@@ -16,4 +16,4 @@ print(
 print("Missing titles:", books["title"].isna().sum())
 print("Missing Authors:", books["authors"].isna().sum())
 print("Duplicate book IDs:", books["book_id"].duplicated().sum())
-print("Number of total ratings:", len(ratings["user_id"].unique()))
+print("Number of total raters:", len(ratings["user_id"].unique()))

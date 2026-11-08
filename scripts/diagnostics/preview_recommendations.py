@@ -7,7 +7,7 @@ from scipy.sparse import load_npz
 ROOT = Path(__file__).resolve().parent
 
 # 1. Load our prepared model
-matrix = load_npz(ROOT / "model" / "item_user.npz")
+matrix = load_npz(ROOT / "models" / "item_user.npz")
 
 # 2. Load book metadata
 books = pd.read_csv(ROOT / "data" / "raw" / "books.csv")

@@ -6,7 +6,7 @@ from html import escape
 from urllib.parse import urlencode
 
 import streamlit as st
-from backend import DEMO_MODE, get_recommendations, search_books
+from backend import get_recommendations, search_books
 from genre_config import GENRES
 
 
@@ -26,7 +26,6 @@ logger = logging.getLogger(__name__)
 
 MAX_FAVOURITES = 20
 
-# TODO: Replace with branch names/IDs from your backend if needed.
 BRANCHES = [
     "Central Library",
     "Britannia",
@@ -772,7 +771,7 @@ if st.session_state.view == "preferences":
             with st.form("book_search", border=False):
                 query = st.text_input(
                     "Search by title or author",
-                    placeholder="Try Project Hail Mary or Matt Haig",
+                    placeholder="The Hunger Games or Matt Haig",
                     key="book_search_query",
                 )
                 search_clicked = st.form_submit_button("Search books")
@@ -988,11 +987,6 @@ if st.session_state.view == "preferences":
                     st.session_state.view = "results"
                     st.rerun()
 
-        if DEMO_MODE:
-            st.caption(
-                "Demo mode: sample book search and fixed example results."
-            )
-
 
 # ------------------------------------------------------------
 # Results
@@ -1040,13 +1034,6 @@ else:
             + " · ".join(st.session_state.saved_genres)
         )
 
-    if DEMO_MODE:
-        st.info(
-            "Demo preview: these are fixed example recommendations. "
-            "Personalised matching and branch availability "
-            "are not connected yet."
-        )
-
     recommendations = st.session_state.recommendations
 
     if not recommendations:
@@ -1075,7 +1062,6 @@ else:
             ):
                 with columns[offset]:
                     render_result(book, start + offset)
-
 
 # ------------------------------------------------------------
 # Footer

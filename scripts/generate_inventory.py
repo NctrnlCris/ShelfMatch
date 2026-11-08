@@ -25,7 +25,7 @@ MIN_INCLUSION = 0.80
 MAX_INCLUSION = 0.95
 
 # Deterministic supply based on actual rating counts, not percentile rank.
-# Square-root scaling keeps the long tail stocked without flattening the top.
+# Power-law scaling keeps the long tail stocked without flattening the top.
 MIN_COPIES = 1
 MAX_COPIES = 30
 COPY_POWER = 2/3
