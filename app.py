@@ -396,10 +396,9 @@ button[kind="primary"] {
 
 def render_hero(results=True):
     st.info(
-    "Recommendations currently use your selected favourite books "
-    "and historical reader ratings. Genre preferences, optional "
-    "ratings, and branch availability are not connected yet. "
-    "Check the VPL catalogue for live holdings."
+    "Library holdings and availability are simulated "
+    "for this prototype, not live VPL data. "
+    "Check the catalogue before visiting."
     )
     if results:
         eyebrow = "YOUR READING SHORTLIST"
@@ -580,13 +579,21 @@ def render_result(book, position):
         if reason:
             st.write(reason)
 
-        # TODO: Supply actual availability through backend.py.
-        availability = book.get("availability")
-        st.caption(
-            str(availability)
-            if availability
-            else "Check availability in the VPL catalogue."
-        )
+
+        available = book.get("available_copies")
+        total = book.get("total_copies")
+        branch = st.session_state.saved_branch
+
+        if total is None:
+            st.caption("Check availability in the VPL catalogue.")
+
+        elif total == 0:
+            st.caption(f"Not stocked at {branch} (simulated)")
+
+        else:
+            st.caption(
+                f"{available} of {total} copies available "
+            )
 
         st.link_button(
             "View in VPL catalogue ↗",

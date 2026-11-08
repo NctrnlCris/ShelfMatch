@@ -31,6 +31,12 @@ def load_model():
         ROOT / "models" / "item_user.npz"
     ).tocsr()
 
+@lru_cache(maxsize=1)
+def load_inventory():
+    return pd.read_csv(
+        ROOT / "data" / "processed" / "inventory.csv"
+    )
+
 
 def search_books(query: str) -> list[dict]:
     query = query.strip().casefold()
@@ -88,6 +94,28 @@ def get_recommendations(
 
     # Exclude the selected books.
     scores[indices] = -np.inf
+    
+    # Retrieve inventory for the selected branch.
+    holdings = load_inventory()
+
+    branch_inventory = holdings[
+        holdings["branch"] == branch
+    ].set_index("book_id")
+
+    # Filter out unavailable books when requested.
+    if priority == "available":
+        available_ids = branch_inventory.index[
+            branch_inventory["available_copies"] > 0
+        ].to_numpy()
+
+        available_mask = np.zeros(
+            len(scores), dtype=bool
+        )
+
+        available_mask[available_ids - 1] = True
+
+        scores[~available_mask] = -np.inf
+
 
     # Sort ALL candidates by similarity.
     ranked_indices = np.argsort(scores)[::-1]
@@ -114,6 +142,32 @@ def get_recommendations(
         # Skip duplicate authors.
         if author_key in seen_authors:
             continue
+        
+        if book_id in branch_inventory.index:
+            available = int(
+                branch_inventory.at[
+                    book_id, "available_copies"
+                ]
+            )
+
+            total = int(
+                branch_inventory.at[
+                    book_id, "total_copies"
+                ]
+            )
+
+            # availability_text = (
+            #     f"{available} of {total} copies available "
+            #     f"at {branch} (simulated)"
+            # )
+
+        else:
+            # availability_text = (
+            #     f"Not owned at {branch} (simulated)"
+            # )
+            total = 0
+            available = 0
+
 
         recommendations.append({
             "id": str(book_id),
@@ -124,9 +178,8 @@ def get_recommendations(
                 "Readers who enjoyed your favourite books "
                 "also enjoyed this title."
             ),
-            "availability": (
-                "Branch availability not connected yet."
-            ),
+            "available_copies": available,
+            "total_copies" : total,
             "catalogue_url": None
         })
 
