@@ -55,7 +55,6 @@ BRANCHES = [
 DEFAULTS = {
     "view": "preferences",
     "favourites": {},
-    "ratings": {},
     "search_results": [],
     "search_complete": False,
     "saved_genres": [],
@@ -76,14 +75,6 @@ def add_favourite(book):
 
 def remove_favourite(book_id):
     st.session_state.favourites.pop(book_id, None)
-    st.session_state.ratings.pop(book_id, None)
-    st.session_state.pop(f"rating_widget_{book_id}", None)
-
-
-def save_rating(book_id):
-    st.session_state.ratings[book_id] = st.session_state[
-        f"rating_widget_{book_id}"
-    ]
 
 
 def save_preference(widget_key, saved_key):
@@ -102,10 +93,6 @@ def start_over():
 
     for key in widget_keys:
         st.session_state.pop(key, None)
-
-    for key in list(st.session_state):
-        if key.startswith("rating_widget_"):
-            st.session_state.pop(key, None)
 
     for key, default in DEFAULTS.items():
         st.session_state[key] = deepcopy(default)
@@ -706,7 +693,7 @@ if st.session_state.view == "preferences":
             section_heading(
                 "01",
                 "What books have you enjoyed?",
-                "Select 3–5 favourites. Ratings are optional.",
+                "Select 3–5 books you loved."
             )
 
             with st.form("book_search", border=False):
@@ -726,7 +713,6 @@ if st.session_state.view == "preferences":
                 else:
                     try:
                         with st.spinner("Searching books…"):
-                            # TODO: Implement search_books in backend.py.
                             matches = search_books(query)
 
                         st.session_state.search_results = list({
@@ -791,25 +777,6 @@ if st.session_state.view == "preferences":
                             use_container_width=True,
                         )
 
-                    rating_key = f"rating_widget_{book_id}"
-                    if rating_key not in st.session_state:
-                        st.session_state[rating_key] = (
-                            st.session_state.ratings.get(book_id, 0)
-                        )
-
-                    st.selectbox(
-                        "Optional rating",
-                        options=[0, 1, 2, 3, 4, 5],
-                        format_func=lambda value: (
-                            "Not rated"
-                            if value == 0
-                            else "★" * value + "☆" * (5 - value)
-                        ),
-                        key=rating_key,
-                        on_change=save_rating,
-                        args=(book_id,),
-                    )
-
         with st.container(key="genres"):
             section_heading(
                 "02",
@@ -860,7 +827,7 @@ if st.session_state.view == "preferences":
             section_heading(
                 "04",
                 "What matters most?",
-                "Choose the kind of results you want to see first.",
+                "Choose between local convenience, VPL-wide availability, or the strongest matches.",
             )
 
             if "priority_widget" not in st.session_state:
@@ -870,8 +837,12 @@ if st.session_state.view == "preferences":
 
             st.radio(
                 "Recommendation priority",
-                ["Best Matches", "Available at My Branch"],
-                horizontal=True,
+                [
+                    "Available at My Branch",
+                    "Available Anywhere in VPL",
+                    "Best Matches",
+                ],
+                horizontal=False,
                 key="priority_widget",
                 on_change=save_preference,
                 args=("priority_widget", "saved_priority"),
@@ -890,28 +861,21 @@ if st.session_state.view == "preferences":
                 st.error("Choose a library branch.")
 
             else:
-                favourites = [
-                    {
-                        **book,
-                        "rating": (
-                            st.session_state.ratings.get(book_id)
-                            or None
-                        ),
-                    }
-                    for book_id, book
-                    in st.session_state.favourites.items()
+                favourites = list(st.session_state.favourites.values())
+ 
+                priority_map = {
+                    "Available at My Branch": "available",
+                    "Available Anywhere in VPL": "any_available",
+                    "Best Matches": "best_matches",
+                }
+
+                priority = priority_map[
+                    st.session_state.saved_priority
                 ]
 
-                priority = (
-                    "available"
-                    if st.session_state.saved_priority
-                    == "Available at My Branch"
-                    else "best_matches"
-                )
 
                 try:
                     with st.spinner("Finding your next reads…"):
-                        # TODO: Implement this function in backend.py.
                         results = get_recommendations(
                             favourites=favourites,
                             genres=st.session_state.saved_genres,

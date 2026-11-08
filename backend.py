@@ -148,10 +148,16 @@ def get_recommendations(
     ].set_index("book_id")
 
     # Only recommend locally available books if requested.
-    if priority == "available":
+     # Filter candidates based on the selected priority.
+    if priority in ("available", "any_available"):
+
+        if priority == "available":
+            availability_column = "available_copies"
+        else:
+            availability_column = "vpl_available_copies"
 
         available_ids = branch_inventory.index[
-            branch_inventory["available_copies"] > 0
+            branch_inventory[availability_column] > 0
         ].to_numpy()
 
         available_mask = np.zeros(
@@ -161,6 +167,7 @@ def get_recommendations(
         available_mask[available_ids - 1] = True
 
         scores[~available_mask] = -np.inf
+
 
     # 5. Rank books by their final recommendation scores.
     ranked_indices = np.argsort(scores)[::-1]
