@@ -1,5 +1,6 @@
 import base64
 import logging
+import math
 from copy import deepcopy
 from html import escape
 from urllib.parse import urlencode
@@ -576,6 +577,37 @@ def render_vancouver_art():
     )
 
 
+def render_match_score(book, colour):
+    """Display the backend's relative score without implying a probability."""
+    value = book.get("match_score")
+    if value is None:
+        return  # Older session results may not include scores yet.
+    try:
+        value = float(value)
+    except (TypeError, ValueError):
+        return
+    if not math.isfinite(value):
+        return
+    value = max(0.0, min(100.0, value))
+    label = f"{value:.1f}".removesuffix(".0")
+    # SVG keeps the ring crisp at any screen size; the text also conveys the score.
+    st.markdown(
+        '<div style="display:flex;align-items:center;gap:14px;margin:12px 0 18px">'
+        f'<svg width="76" height="76" viewBox="0 0 76 76" role="img" '
+        f'aria-label="Relative match score: {label} out of 100" style="flex-shrink:0">'
+        '<circle cx="38" cy="38" r="30" fill="none" stroke="#E9EEF0" stroke-width="8"/>'
+        f'<circle cx="38" cy="38" r="30" fill="none" stroke="{colour}" '
+        f'stroke-width="8" pathLength="100" stroke-dasharray="{value} 100" '
+        'transform="rotate(-90 38 38)"/>'
+        f'<text x="38" y="42" text-anchor="middle" fill="#152C40" '
+        f'font-family="sans-serif" font-size="17" font-weight="700">{label}</text>'
+        '</svg><div><div style="color:#152C40;font-weight:700">Match score</div>'
+        '<div style="color:#5F6D76;font-size:13px">Relative score · out of 100</div>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+
+
 def render_result(book, position):
     colours = [
         "#147DAB",
@@ -627,6 +659,8 @@ def render_result(book, position):
         genres = book.get("genres", [])
         if genres:
             st.caption(" · ".join(genres))
+
+        render_match_score(book, colour)
 
         st.divider()
         # The shared explanation is already shown above the result grid.
@@ -1028,6 +1062,10 @@ else:
 
     else:
         st.caption(f"{len(recommendations)} books to explore")
+        st.caption(
+            "Match scores compare these results with your strongest overall match (100), before availability filtering. "
+            "They include your genre preferences and aren’t a percentage chance you’ll like a book."
+        )
 
         for start in range(0, len(recommendations), 3):
             columns = st.columns(3, gap="medium")

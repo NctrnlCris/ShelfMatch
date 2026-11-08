@@ -140,6 +140,11 @@ def get_recommendations(
             1 + 0.25 * np.minimum(genre_bonus, 1.0)
         )
 
+    # Use the strongest unseen match before any inventory/availability filtering.
+    # Branch and availability choices must not change a book’s relative score.
+    positive_scores = scores[np.isfinite(scores) & (scores > 0)]
+    best_score = float(positive_scores.max()) if positive_scores.size else 0.0
+
     # 4. Load simulated inventory for the selected branch.
     holdings = load_inventory()
 
@@ -234,6 +239,8 @@ def get_recommendations(
         # 8. Construct the recommendation dictionary.
         recommendations.append({
             "id": str(book_id),
+            "recommendation_score": float(scores[index]),
+            "match_score": float(100.0 * scores[index] / best_score) if best_score else 0.0,
             "title": title,
             "author": author,
             "genres": book_genre_lookup().get(book_id, []),
