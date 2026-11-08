@@ -5,8 +5,8 @@ from html import escape
 from urllib.parse import urlencode
 
 import streamlit as st
-
 from backend import DEMO_MODE, get_recommendations, search_books
+from genre_config import GENRES
 
 
 st.set_page_config(
@@ -22,19 +22,6 @@ logger = logging.getLogger(__name__)
 # Options
 # ------------------------------------------------------------
 
-GENRES = [
-    "Fantasy",
-    "Mystery",
-    "Romance",
-    "Science fiction",
-    "Literary fiction",
-    "Thriller",
-    "Historical fiction",
-    "Memoir",
-    "Nonfiction",
-    "Adventure",
-    "Nature",
-]
 
 # TODO: Replace with branch names/IDs from your backend if needed.
 BRANCHES = [
@@ -394,29 +381,42 @@ button[kind="primary"] {
 # Display helpers
 # ------------------------------------------------------------
 
-def render_hero(results=True):
-    st.info(
-    "Library holdings and availability are simulated "
-    "for this prototype, not live VPL data. "
-    "Check the catalogue before visiting."
-    )
+
+def render_hero(results=False):
+
     if results:
         eyebrow = "YOUR READING SHORTLIST"
         first_line = "Your next"
         second_line = "chapter starts here."
-        description = (
-            "Select a book to explore it in the VPL catalogue."
-        )
+
+        selected_genres = st.session_state.saved_genres
+
+        if selected_genres:
+            genre_text = ", ".join(selected_genres)
+
+            description = (
+                "Readers who enjoyed your favourite books also enjoyed "
+                "these titles. We've given extra weight to books matching "
+                f"your preferred genres: {genre_text}."
+            )
+        else:
+            description = (
+                "Readers who enjoyed your favourite books also enjoyed "
+                "these titles."
+            )
+        
+
     else:
         eyebrow = "VANCOUVER / BOOK DISCOVERY"
         first_line = "Find your"
         second_line = "next great read."
+
         description = (
             "Your favourite books. Your local library. "
             "Recommendations made for you."
         )
 
-    # One HTML block, with matching CSS class names.
+    # Build the hero HTML.
     html = (
         '<div class="sm-hero">'
         f'<div class="sm-eyebrow">{eyebrow}</div>'
@@ -427,7 +427,9 @@ def render_hero(results=True):
         f'<div class="sm-description">{description}</div>'
         '</div>'
     )
+
     st.markdown(html, unsafe_allow_html=True)
+
 
 
 def section_heading(number, title, description):
@@ -575,9 +577,24 @@ def render_result(book, position):
 
         st.divider()
 
-        reason = book.get("reason")
-        if reason:
-            st.write(reason)
+        
+        st.write(
+            "Readers who enjoyed your favourite books "
+            "also enjoyed this title."
+        )
+
+        matching_genres = [
+            genre
+            for genre in book.get("genres", [])
+            if genre in st.session_state.saved_genres
+        ]
+
+        if matching_genres:
+            st.caption(
+                "Matches your preferred genres: "
+                + ", ".join(matching_genres)
+            )
+
 
 
         available = book.get("available_copies")
@@ -593,6 +610,7 @@ def render_result(book, position):
         else:
             st.caption(
                 f"{available} of {total} copies available "
+                f"at {branch} (simulated)"
             )
 
         st.link_button(
@@ -883,6 +901,11 @@ else:
         )
 
     render_hero(results=True)
+    st.info(
+            "Library holdings and availability are simulated "
+            "for this prototype, not live VPL data. "
+            "Check the catalogue before visiting."
+        )
 
     branch_column, priority_column = st.columns(2)
 

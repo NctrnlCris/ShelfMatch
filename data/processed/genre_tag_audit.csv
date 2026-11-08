@@ -1,0 +1,227 @@
+genre,tag_name,tag_id,tag_found
+Fantasy,fantasy,11305.0,True
+Fantasy,epic-fantasy,10731.0,True
+Fantasy,high-fantasy,14361.0,True
+Fantasy,urban-fantasy,31617.0,True
+Fantasy,dark-fantasy,8938.0,True
+Fantasy,fantasy-epic,11336.0,True
+Fantasy,fantasy-high,11348.0,True
+Fantasy,fantasy-urban,11388.0,True
+Science Fiction,science-fiction,26837.0,True
+Science Fiction,sci-fi,26771.0,True
+Science Fiction,scifi,26894.0,True
+Science Fiction,sciencefiction,26884.0,True
+Science Fiction,sci_fi,26815.0,True
+Science Fiction,space-opera,28247.0,True
+Science Fiction,cyberpunk,8755.0,True
+Science Fiction,sci-fi-space-opera,26803.0,True
+Science Fiction,sci-fi-cyberpunk,26782.0,True
+Dystopian,dystopia,10059.0,True
+Dystopian,dystopian,10064.0,True
+Dystopian,dystopian-fiction,10067.0,True
+Dystopian,dystopian-future,10068.0,True
+Dystopian,dystopias,10081.0,True
+Dystopian,post-apocalyptic,24051.0,True
+Romance,romance,26138.0,True
+Romance,romances,26177.0,True
+Romance,romance-contemporary,26146.0,True
+Romance,contemporary-romance,8076.0,True
+Romance,historical-romance,14527.0,True
+Romance,romance-historical,26154.0,True
+Romance,romance-paranormal,26163.0,True
+Romance,paranormal-romance,22983.0,True
+Mystery,mystery,20939.0,True
+Mystery,mysteries,20926.0,True
+Mystery,mystery-cozy,20956.0,True
+Mystery,cozy-mystery,8429.0,True
+Mystery,mystery-detective,20963.0,True
+Mystery,detective-fiction,9343.0,True
+Mystery,mystery-historical,20971.0,True
+Crime,crime-fiction,8527.0,True
+Crime,crime-novel,8538.0,True
+Crime,crime-novels,8539.0,True
+Crime,detective-crime-fiction,9340.0,True
+Crime,british-crime-fiction,5763.0,True
+Crime,crime-and-mystery,8518.0,True
+Crime,crime-mystery,8533.0,True
+Crime,crime-thriller,8545.0,True
+Thriller,thriller,30358.0,True
+Thriller,thrillers,30386.0,True
+Thriller,suspense,29076.0,True
+Thriller,suspense-thriller,29083.0,True
+Thriller,psychological-thriller,24521.0,True
+Thriller,thriller-political,30376.0,True
+Thriller,thriller-legal,30369.0,True
+Thriller,mystery-thriller,20994.0,True
+Horror,horror,14821.0,True
+Horror,horror-fiction,14836.0,True
+Horror,horror-gothic,14838.0,True
+Horror,gothic-horror,13450.0,True
+Horror,horror-supernatural,14851.0,True
+Horror,horror-macabre,14840.0,True
+Horror,horror-stories,14850.0,True
+Historical Fiction,historical-fiction,14487.0,True
+Historical Fiction,historical-novel,14523.0,True
+Historical Fiction,historical-novels,14524.0,True
+Historical Fiction,historical_fiction,14538.0,True
+Historical Fiction,historical-mystery,14519.0,True
+Historical Fiction,historical-romance,14527.0,True
+Literary Fiction,literary-fiction,18326.0,True
+Literary Fiction,literary,18318.0,True
+Literary Fiction,literary-novels,,False
+Contemporary Fiction,contemporary-fiction,8067.0,True
+Contemporary Fiction,contemporary-lit,8069.0,True
+Contemporary Fiction,contemporary-literature,8070.0,True
+Contemporary Fiction,contemporary-realistic-fiction,8075.0,True
+Contemporary Fiction,realistic-fiction,25438.0,True
+Adventure,adventure,1691.0,True
+Adventure,adventure-fiction,1696.0,True
+Adventure,adventure-action,1692.0,True
+Adventure,action-adventure,1542.0,True
+Adventure,adventure-and-survival,1693.0,True
+Paranormal,paranormal,22973.0,True
+Paranormal,paranormal-fiction,22979.0,True
+Paranormal,paranormal-mystery,22981.0,True
+Paranormal,paranormal-romance,22983.0,True
+Paranormal,paranormal-supernatural,22988.0,True
+Paranormal,supernatural,29011.0,True
+Magical Realism,magical-realism,18919.0,True
+Magical Realism,magical-realisim,18918.0,True
+Magical Realism,magic-realism,18896.0,True
+Humor & Comedy,humor,15048.0,True
+Humor & Comedy,humour,15067.0,True
+Humor & Comedy,comedy,7725.0,True
+Humor & Comedy,humor-and-comedy,15049.0,True
+Humor & Comedy,humor-comedy,15052.0,True
+Humor & Comedy,humorous-fiction,15063.0,True
+Humor & Comedy,satire,26636.0,True
+Nonfiction,nonfiction,21773.0,True
+Nonfiction,non-fiction,21689.0,True
+Nonfiction,non-fiction-general,21710.0,True
+Nonfiction,nonfiction-general,21785.0,True
+Biography,biography,4605.0,True
+Biography,biographies,4594.0,True
+Biography,biography-memoir,4615.0,True
+Biography,biography-history,4614.0,True
+Biography,autobiography,3611.0,True
+Biography,autobiographies,3608.0,True
+Memoir,memoir,19733.0,True
+Memoir,memoirs,19742.0,True
+Memoir,autobiography,3611.0,True
+Memoir,autobiographies,3608.0,True
+Memoir,memoir-autobiography,19735.0,True
+Memoir,memoirs-and-autobiographies,19743.0,True
+History,history,14552.0,True
+History,history-general,14585.0,True
+History,non-fiction-history,21712.0,True
+History,nonfiction-history,21788.0,True
+History,world-history,32796.0,True
+True Crime,true-crime,31254.0,True
+True Crime,true_crime,31267.0,True
+True Crime,truecrime,31269.0,True
+True Crime,nonfiction-true-crime,21805.0,True
+True Crime,crime-non-fiction,8537.0,True
+Science,science,26816.0,True
+Science,popular-science,23996.0,True
+Science,science-popular,26869.0,True
+Science,non-fiction-science,21732.0,True
+Science,nonfiction-science,21799.0,True
+Science,science-nonfiction,26866.0,True
+Nature,nature,21195.0,True
+Nature,nature-writing,21205.0,True
+Nature,natural-history,21187.0,True
+Nature,nature-environment,21200.0,True
+Nature,nature-and-environment,21196.0,True
+Psychology,psychology,24526.0,True
+Psychology,psychology-neuroscience,24535.0,True
+Psychology,psychology-self-help,24543.0,True
+Psychology,psychology-psychoanalysis,24539.0,True
+Psychology,psychology-neurology,24534.0,True
+Philosophy,philosophy,23471.0,True
+Philosophy,philosophy-general,23488.0,True
+Philosophy,philosophy-ethics,23486.0,True
+Philosophy,philosophy-metaphysics,23492.0,True
+Philosophy,philosophy-existentialism,23487.0,True
+Politics,politics,23931.0,True
+Politics,political-science,23923.0,True
+Politics,politics-and-current-events,23932.0,True
+Politics,politics-and-government,23935.0,True
+Politics,politics-current-events,23939.0,True
+Business,business,5951.0,True
+Business,business-management,5990.0,True
+Business,business-entrepreneurship,5975.0,True
+Business,business-economics,5971.0,True
+Business,business-finance,5979.0,True
+Business,economics,10245.0,True
+Business,finance,11937.0,True
+Self-Help,self-help,27095.0,True
+Self-Help,selfhelp,27123.0,True
+Self-Help,self-improvement,27111.0,True
+Self-Help,personal-development,23334.0,True
+Self-Help,personal-growth,23343.0,True
+Travel,travel,31155.0,True
+Travel,travel-writing,31186.0,True
+Travel,travel-literature,31174.0,True
+Travel,travelogue,31190.0,True
+Travel,travel-guides,31169.0,True
+Travel,travel-guide,31168.0,True
+Religion & Spirituality,religion,25647.0,True
+Religion & Spirituality,spirituality,28384.0,True
+Religion & Spirituality,theology,30241.0,True
+Religion & Spirituality,religion-spirituality,25674.0,True
+Religion & Spirituality,religion-theology,25678.0,True
+Religion & Spirituality,spirituality-and-religion,28387.0,True
+Health & Wellness,health,14134.0,True
+Health & Wellness,health-wellness,14168.0,True
+Health & Wellness,health-fitness,14151.0,True
+Health & Wellness,wellness,32324.0,True
+Health & Wellness,nutrition,22098.0,True
+Health & Wellness,fitness,12068.0,True
+Health & Wellness,mental-health,19786.0,True
+Poetry,poetry,23831.0,True
+Poetry,poetry-collection,23844.0,True
+Poetry,poetry-collections,23845.0,True
+Poetry,poetry-poems,23854.0,True
+Poetry,poems,23816.0,True
+Short Stories,short-stories,27669.0,True
+Short Stories,short-story,27682.0,True
+Short Stories,short-stories-collections,27677.0,True
+Short Stories,short-story-collection,27683.0,True
+Short Stories,short-stories-anthologies,27675.0,True
+Short Stories,short-story-collections,27684.0,True
+Graphic Novels,graphic-novels,13561.0,True
+Graphic Novels,graphic-novel,13547.0,True
+Graphic Novels,comics,7778.0,True
+Graphic Novels,comic-books,7746.0,True
+Graphic Novels,comics-and-graphic-novels,7784.0,True
+Graphic Novels,comics-graphic-novels,7806.0,True
+Manga,manga,19052.0,True
+Manga,manga-shonen,19150.0,True
+Manga,manga-shoujo,19151.0,True
+Manga,manga-seinen,19145.0,True
+Manga,manga-japanese,19116.0,True
+Manga,manga-shojo,19149.0,True
+Manga,manga-shounen,19152.0,True
+Classics,classics,7457.0,True
+Classics,classic-literature,7423.0,True
+Classics,literary-classics,18322.0,True
+Classics,classics-literature,7468.0,True
+Classics,classic,7404.0,True
+Young Adult,young-adult,33114.0,True
+Young Adult,ya,32989.0,True
+Young Adult,ya-fiction,33012.0,True
+Young Adult,young-adult-books,33116.0,True
+Young Adult,young-adult-fiction,33124.0,True
+Young Adult,ya-lit,33023.0,True
+Young Adult,youngadult,33153.0,True
+Middle Grade,middle-grade,19974.0,True
+Middle Grade,middle-grade-fiction,19979.0,True
+Middle Grade,middlegrade,19990.0,True
+Middle Grade,middle-grades,19980.0,True
+Middle Grade,middle-reader,19981.0,True
+Children's,childrens,6953.0,True
+Children's,children-s,6888.0,True
+Children's,children-s-literature,6920.0,True
+Children's,childrens-books,6960.0,True
+Children's,children-s-fiction,6909.0,True
+Children's,picture-books,23605.0,True

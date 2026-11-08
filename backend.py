@@ -37,6 +37,27 @@ def load_inventory():
         ROOT / "data" / "processed" / "inventory.csv"
     )
 
+@lru_cache(maxsize=1)
+def load_genres():
+    return pd.read_csv(
+        ROOT / "data" / "processed" / "book_genres.csv"
+    )
+
+
+@lru_cache(maxsize=1)
+def book_genre_lookup():
+    return (
+        load_genres()
+        .sort_values(
+            ["book_id", "genre_weight"],
+            ascending=[True, False]
+        )
+        .groupby("book_id")["genre"]
+        .agg(list)
+        .to_dict()
+    )
+
+
 
 def search_books(query: str) -> list[dict]:
     query = query.strip().casefold()
@@ -61,7 +82,7 @@ def search_books(query: str) -> list[dict]:
             "id": str(row.book_id),
             "title": row.title,
             "author": row.authors,
-            "genres": [],
+            "genres": book_genre_lookup().get(int(row.book_id), []),
             "catalogue_url": None
         }
         for row in matches.itertuples(index=False)
@@ -94,6 +115,31 @@ def get_recommendations(
 
     # Exclude the selected books.
     scores[indices] = -np.inf
+
+    
+    # Boost books matching the user's preferred genres.
+    if genres:
+        matched = load_genres()
+
+        matched = matched[
+            matched["genre"].isin(genres)
+        ]
+
+        genre_bonus = np.zeros_like(
+            scores, dtype=float
+        )
+
+        np.add.at(
+            genre_bonus,
+            matched["book_id"].to_numpy(dtype=int) - 1,
+            matched["genre_weight"].to_numpy(dtype=float)
+        )
+
+        # Maximum 25% boost from genre preferences.
+        scores *= (
+            1 + 0.25 * np.minimum(genre_bonus, 1.0)
+        )
+
     
     # Retrieve inventory for the selected branch.
     holdings = load_inventory()
@@ -173,11 +219,7 @@ def get_recommendations(
             "id": str(book_id),
             "title": title,
             "author": author,
-            "genres": [],
-            "reason": (
-                "Readers who enjoyed your favourite books "
-                "also enjoyed this title."
-            ),
+            "genres": book_genre_lookup().get(book_id, []),
             "available_copies": available,
             "total_copies" : total,
             "catalogue_url": None
