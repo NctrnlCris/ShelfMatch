@@ -6,6 +6,10 @@ ShelfMatch is a book recommendation prototype designed around Vancouver Public L
 
 Built individually by Cristian Batista at **HackCamp 2026**.
 
+**[Watch the demo on YouTube →](https://youtu.be/OcHqqNH_5Zc)**
+
+[![ShelfMatch homepage with book search and Vancouver-inspired artwork](docs/images/homepage.png)](https://youtu.be/OcHqqNH_5Zc)
+
 > **Prototype status:** recommendations use real historical Goodreads ratings and tags. All holdings and copy counts are simulated. ShelfMatch is an independent project, not an official VPL service; live catalogue and inventory API integration is a future goal.
 
 ## Why I built it
@@ -35,6 +39,28 @@ The longer-term vision includes an approachable experience for seniors and other
 | Best Matches | Any title owned in the simulated collection, including fully checked-out titles |
 
 Availability changes which books are eligible. It is not an extra popularity score or a prediction of when a book will be returned.
+
+## Screenshots
+
+### Choose your reading preferences
+
+Select genres, a branch, and whether to prioritize availability or the strongest matches.
+
+![ShelfMatch preferences with genres, Collingwood branch, and three recommendation priorities](docs/images/preferences.png)
+
+### Compare your best matches
+
+Recommendation cards bring together relative match scores, genre matches, copy counts, and catalogue links. All inventory shown in these screenshots is simulated.
+
+[![ShelfMatch recommendation cards showing relative scores and availability](docs/images/best-matches.png)](https://youtu.be/OcHqqNH_5Zc)
+
+*Click the screenshot to watch the demo.*
+
+### Find something available at your branch
+
+Switching to **Available at My Branch** changes the results while retaining the same score reference. In this example, the first local match scores 63.7 rather than being rescaled to 100.
+
+![Available at My Branch results for Collingwood, with The Kite Runner ranked first at 63.7](docs/images/available-at-branch.png)
 
 ## How recommendations work
 
@@ -199,7 +225,7 @@ These are dependency-based setup instructions, not a pinned, clean-environment r
 
 A backend smoke check using The Hunger Games, Divergent, and The Maze Runner with Dystopian and Central Library returned 10 results in each priority mode against the supplied artifacts. Local availability changed the results. An additional check with 20 favourites returned 10 results and excluded all selected books. Shared results retained identical match scores across the three priority modes; in the sample profile, the top local result scored approximately 90.94 while the strongest overall match scored 100. This checks functionality, not recommendation quality; it does not constitute a browser or deployment test.
 
-Recommendation quality is currently unmeasured: functional checks show that the pipeline runs, but do not establish whether readers will enjoy its suggestions. The 25% genre boost and other ranking choices have not yet been validated.
+Recommendation quality is currently unmeasured: functional checks show that the pipeline runs, but do not establish whether readers will enjoy its suggestions. The 25% genre boost and other ranking choices have not yet been validated against held-out outcomes.
 
 ### Development roadmap
 

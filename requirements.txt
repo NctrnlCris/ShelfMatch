@@ -1,0 +1,8 @@
+# App and recommendation backend
+streamlit
+numpy
+pandas
+scipy
+
+# Model-building script
+scikit-learn
