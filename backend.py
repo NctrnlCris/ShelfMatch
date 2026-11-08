@@ -90,6 +90,7 @@ def search_books(query: str) -> list[dict]:
 
 
 
+
 def get_recommendations(
     favourites: list[dict],
     genres: list[str],
@@ -97,6 +98,7 @@ def get_recommendations(
     priority: str,
 ) -> list[dict]:
 
+    # 1. Load recommendation model and book information.
     matrix = load_model()
     books = load_books().set_index("book_id")
 
@@ -105,19 +107,17 @@ def get_recommendations(
         [int(book["id"]) - 1 for book in favourites]
     )
 
-    # Compare all books against selected favourites.
+    # 2. Calculate collaborative filtering scores.
     similarities = matrix @ matrix[indices].T
 
-    # Average similarity across the favourites.
     scores = np.asarray(
         similarities.mean(axis=1)
     ).ravel()
 
-    # Exclude the selected books.
+    # Exclude the books the user already selected.
     scores[indices] = -np.inf
 
-    
-    # Boost books matching the user's preferred genres.
+    # 3. Apply a soft genre boost.
     if genres:
         matched = load_genres()
 
@@ -135,21 +135,21 @@ def get_recommendations(
             matched["genre_weight"].to_numpy(dtype=float)
         )
 
-        # Maximum 25% boost from genre preferences.
+        # Maximum 25% increase in similarity score.
         scores *= (
             1 + 0.25 * np.minimum(genre_bonus, 1.0)
         )
 
-    
-    # Retrieve inventory for the selected branch.
+    # 4. Load simulated inventory for the selected branch.
     holdings = load_inventory()
 
     branch_inventory = holdings[
         holdings["branch"] == branch
     ].set_index("book_id")
 
-    # Filter out unavailable books when requested.
+    # Only recommend locally available books if requested.
     if priority == "available":
+
         available_ids = branch_inventory.index[
             branch_inventory["available_copies"] > 0
         ].to_numpy()
@@ -162,16 +162,15 @@ def get_recommendations(
 
         scores[~available_mask] = -np.inf
 
-
-    # Sort ALL candidates by similarity.
+    # 5. Rank books by their final recommendation scores.
     ranked_indices = np.argsort(scores)[::-1]
 
     recommendations = []
     seen_authors = set()
 
+    # 6. Examine books in descending score order.
     for index in ranked_indices:
 
-        # Scores are in descending order.
         # Stop when there is no positive similarity.
         if scores[index] <= 0:
             break
@@ -182,51 +181,62 @@ def get_recommendations(
         title = str(book["title"])
         author = str(book["authors"])
 
-        # Normalize the main author's name.
+        # Use the primary author for diversity filtering.
         author_key = author.split(",")[0].strip().casefold()
 
-        # Skip duplicate authors.
         if author_key in seen_authors:
             continue
-        
+
+        # 7. Retrieve inventory information for this book.
         if book_id in branch_inventory.index:
+
+            # Available copies at the selected branch.
             available = int(
                 branch_inventory.at[
                     book_id, "available_copies"
                 ]
             )
 
+            # Total copies owned across VPL.
             total = int(
                 branch_inventory.at[
                     book_id, "total_copies"
                 ]
             )
 
-            # availability_text = (
-            #     f"{available} of {total} copies available "
-            #     f"at {branch} (simulated)"
-            # )
+            # Available copies across all VPL branches.
+            vpl_available = int(
+                branch_inventory.at[
+                    book_id, "vpl_available_copies"
+                ]
+            )
 
         else:
-            # availability_text = (
-            #     f"Not owned at {branch} (simulated)"
-            # )
-            total = 0
+            # VPL doesn't own this title in our simulation.
             available = 0
+            total = 0
+            vpl_available = 0
 
-
+        # 8. Construct the recommendation dictionary.
         recommendations.append({
             "id": str(book_id),
             "title": title,
             "author": author,
             "genres": book_genre_lookup().get(book_id, []),
+            "reason": (
+                "Readers who enjoyed your favourite books "
+                "also enjoyed this title."
+            ),
             "available_copies": available,
-            "total_copies" : total,
-            "catalogue_url": None
+            "total_copies": total,
+            "vpl_available_copies": vpl_available,
+            "catalogue_url": None,
         })
 
+        # Prevent recommending another book by this author.
         seen_authors.add(author_key)
 
+        # Stop after selecting 10 distinct authors.
         if len(recommendations) == 10:
             break
 

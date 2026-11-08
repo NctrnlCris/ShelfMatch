@@ -215,6 +215,40 @@ st.markdown(
     line-height: 1.6;
 }
 
+/* Availability summary inside each recommendation card. */
+.sm-availability {
+    background: #F4F3EF;
+    border: 1px solid #DADFE1;
+    border-radius: 6px;
+    padding: 14px;
+    margin: 12px 0;
+}
+
+.sm-availability-title {
+    color: #152C40;
+    font-weight: 750;
+    margin-bottom: 12px;
+}
+
+.sm-availability-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 6px;
+    color: #152C40;
+    font-size: 13px;
+}
+
+.sm-availability-row strong {
+    font-weight: 750;
+}
+
+.sm-availability-divider {
+    border-top: 1px solid #DADFE1;
+    margin: 10px 0;
+}
+
 .st-key-books,
 .st-key-genres,
 .st-key-branch,
@@ -595,23 +629,43 @@ def render_result(book, position):
                 + ", ".join(matching_genres)
             )
 
+        available = int(book.get("available_copies") or 0)
+        total = int(book.get("total_copies") or 0)
+        vpl_available = int(book.get("vpl_available_copies") or 0)
+        branch = st.session_state.saved_branch or "Selected branch"
 
+        # Keep HTML flush-left: indented multi-line HTML gets rendered
+        # as a Markdown code block in some Streamlit versions.
+        availability_html = (
+            '<div class="sm-availability">'
+            '<div class="sm-availability-title">Availability</div>'
+            '<div class="sm-availability-row">'
+            f'<span>At {escape(str(branch))}</span>'
+            f'<strong>{available} available</strong>'
+            '</div>'
+            '<div class="sm-availability-divider"></div>'
+            '<div class="sm-availability-row">'
+            '<span>Across all VPL branches</span>'
+            f'<strong>{vpl_available} available / {total} total</strong>'
+            '</div>'
+            '</div>'
+        )
+        st.markdown(availability_html, unsafe_allow_html=True)
 
-        available = book.get("available_copies")
-        total = book.get("total_copies")
-        branch = st.session_state.saved_branch
-
-        if total is None:
-            st.caption("Check availability in the VPL catalogue.")
-
-        elif total == 0:
-            st.caption(f"Not stocked at {branch} (simulated)")
-
-        else:
+        if total == 0:
+            st.caption("Not in the simulated VPL collection.")
+        elif available == 0 and vpl_available > 0:
             st.caption(
-                f"{available} of {total} copies available "
-                f"at {branch} (simulated)"
+                "No copies currently available at your branch. "
+                "Check the catalogue for hold options."
             )
+        elif vpl_available == 0:
+            st.caption(
+                "All simulated copies are checked out. "
+                "Check the catalogue for hold options."
+            )
+
+        st.caption("Simulated inventory · Not live VPL data")
 
         st.link_button(
             "View in VPL catalogue ↗",

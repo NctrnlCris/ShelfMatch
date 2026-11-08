@@ -1,100 +1,147 @@
-"""Generate reproducible, fictional VPL branch holdings for ShelfMatch.
 
-Run from anywhere: python scripts/generate_inventory.py
-This is a *simulation*, not Vancouver Public Library inventory data.
-"""
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
-"""Generate reproducible, fictional VPL branch holdings for ShelfMatch.
-
-Run from anywhere: python scripts/generate_inventory.py
-This is a *simulation*, not Vancouver Public Library inventory data.
-"""
-
 ROOT = Path(__file__).resolve().parents[1]
+
 SOURCE = ROOT / "data" / "raw" / "books.csv"
 OUTPUT = ROOT / "data" / "processed" / "inventory.csv"
 
-# Relative, fictional branch capacity factors (not measured VPL sizes).
-# Keep these names consistent with BRANCHES in app.py.
-BRANCH_CAPACITY = {
-    "Central Library": 1.00,
-    "Britannia": 0.48,
-    "Carnegie": 0.32,
-    "Champlain Heights": 0.40,
-    "Collingwood": 0.55,
-    "Dunbar": 0.55,
-    "Firehall": 0.38,
-    "Fraserview": 0.55,
-    "Hastings": 0.48,
-    "Joe Fortes": 0.60,
-    "Kensington": 0.52,
-    "Kerrisdale": 0.55,
-    "Kitsilano": 0.65,
-    "Marpole": 0.40,
-    "Mount Pleasant": 0.72,
-    "nə́c̓aʔmat ct Strathcona": 0.40,
-    "Renfrew": 0.60,
-    "South Hill": 0.50,
-    "Terry Salman": 0.65,
-    "West Point Grey": 0.46,
+# Relative weights for where available copies are located.
+# These are fictional, not actual VPL collection figures.
+BRANCH_WEIGHTS = {
+    "Central Library": 5.0,
+    "Britannia": 1.5,
+    "Carnegie": 0.8,
+    "Champlain Heights": 1.0,
+    "Collingwood": 1.4,
+    "Dunbar": 1.5,
+    "Firehall": 0.8,
+    "Fraserview": 1.0,
+    "Hastings": 1.2,
+    "Joe Fortes": 1.7,
+    "Kensington": 1.1,
+    "Kerrisdale": 1.6,
+    "Kitsilano": 1.8,
+    "Marpole": 1.3,
+    "Mount Pleasant": 1.9,
+    "nə́c̓aʔmat ct Strathcona": 1.4,
+    "Renfrew": 1.3,
+    "South Hill": 1.1,
+    "Terry Salman": 1.2,
+    "West Point Grey": 1.4,
 }
 
 rng = np.random.default_rng(42)
 
 books = pd.read_csv(
     SOURCE,
-    usecols=["book_id", "ratings_count"],
+    usecols=["book_id", "ratings_count"]
 )
 
-counts = pd.to_numeric(books["ratings_count"], errors="coerce").fillna(0).clip(lower=0)
+# Relative Goodreads popularity, between 0 and 1.
+popularity = (
+    books["ratings_count"]
+    .fillna(0)
+    .clip(lower=0)
+    .rank(pct=True)
+    .to_numpy()
+)
 
-popularity = counts.rank(pct=True).to_numpy()
+# STEP 1: Does VPL own this title at all?
+ownership_probability = 0.48 + 0.35 * popularity
+
+owned = rng.random(len(books)) < ownership_probability
+
+book_ids = books.loc[owned, "book_id"].to_numpy()
+demand = popularity[owned]
+
+# STEP 2: How many copies does VPL own system-wide?
+expected_extra_copies = 0.3 + 5.0 * demand**2
+
+total_copies = (
+    1 + rng.poisson(expected_extra_copies)
+)
+
+total_copies = np.minimum(total_copies, 12)
+
+# STEP 3: Normalize branch weights.
+branches = list(BRANCH_WEIGHTS)
+
+weights = np.array(
+    list(BRANCH_WEIGHTS.values()), dtype=float
+)
+
+weights = weights / weights.sum()
 
 records = []
-for branch, capacity in BRANCH_CAPACITY.items():
-    # (1) Ownership: bigger branches own a wider selection. Popularity adds
-    # a modest increase in the chance of owning a title.
-    ownership_probability = np.clip(
-        0.12 + 0.48 * capacity + 0.20 * (popularity - 0.5),
-        0.05, 0.85,
+
+# STEP 4: Distribute each title's copies.
+for book_id, total, popularity_score in zip(
+    book_ids, total_copies, demand
+):
+    # Popular books are more likely to be checked out.
+    p_available = np.clip(
+        0.78 - 0.62 * popularity_score,
+        0.10,
+        0.90
     )
-    owned = rng.random(len(books)) < ownership_probability
-    ids = books.loc[owned, "book_id"].to_numpy(dtype=np.int32)
-    demand = popularity[owned]
 
-    # (2) Copies: popular titles and larger branches tend to own more copies.
-    # At least one copy exists for every owned title; cap at eight for the demo.
-    expected_extra_copies = 0.10 + 0.40 * demand + 2.0 * capacity * demand**2
-    total = 1 + rng.poisson(expected_extra_copies)
-    total = np.minimum(total, 8).astype(np.int16)
+    # Available copies are distributed between branches.
+    # The final category represents checked-out copies.
+    probabilities = np.append(
+        weights * p_available,
+        1 - p_available
+    )
 
-    # (3) Current availability: popular titles have a lower probability
-    # of being on the shelf *per copy* because of fictional circulation demand.
-    per_copy_available_probability = np.clip(0.78 - 0.62 * demand, 0.10, 0.90)
-    available = rng.binomial(total, per_copy_available_probability).astype(np.int16)
+    allocation = rng.multinomial(
+        int(total), probabilities
+    )
 
-    records.append(pd.DataFrame({
-        "book_id": ids,
-        "branch": branch,
-        "total_copies": total,
-        "available_copies": available,
-    }))
+    branch_available = allocation[:-1]
+    vpl_available = int(branch_available.sum())
 
-inventory = pd.concat(records, ignore_index=True)
-assert (inventory["available_copies"] >= 0).all()
-assert (inventory["available_copies"] <= inventory["total_copies"]).all()
-assert not inventory.duplicated(["book_id", "branch"]).any()
+    for branch, available in zip(
+        branches, branch_available
+    ):
+        records.append({
+            "book_id": int(book_id),
+            "branch": branch,
+            "total_copies": int(total),
+            "available_copies": int(available),
+            "vpl_available_copies": vpl_available,
+        })
+
+inventory = pd.DataFrame(records)
+
+# Ensure system-wide availability is consistent.
+summary = inventory.groupby("book_id").agg(
+    total=("total_copies", "first"),
+    available=("available_copies", "sum"),
+    reported_available=("vpl_available_copies", "first"),
+)
+
+assert (summary["available"] <= summary["total"]).all()
+assert (
+    summary["available"] == summary["reported_available"]
+).all()
+
+assert not inventory.duplicated(
+    ["book_id", "branch"]
+).any()
 
 OUTPUT.parent.mkdir(parents=True, exist_ok=True)
 inventory.to_csv(OUTPUT, index=False)
 
-print(inventory.groupby("branch").agg(
-    titles_owned=("book_id", "size"),
-    copies_owned=("total_copies", "sum"),
-    titles_available=("available_copies", lambda col: (col > 0).sum()),
-    copies_available=("available_copies", "sum"),
-))
+print(f"Saved {len(inventory):,} inventory rows")
+print(f"VPL titles: {len(summary):,}")
+print(f"System-wide copies: {summary['total'].sum():,}")
+
+print(
+    inventory.groupby("branch")["available_copies"]
+    .sum()
+    .sort_values(ascending=False)
+)
+
