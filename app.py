@@ -141,7 +141,7 @@ st.markdown(
 }
 
 .sm-logo {
-    color: #152C40;
+    color: #111111;
     font-size: 29px;
     font-weight: 850;
     letter-spacing: -1.5px;
@@ -362,8 +362,12 @@ button[kind="primary"] {
 }
 
 .sm-footer strong {
-    color: #152C40;
+    color: #111111;
     font-size: 16px;
+}
+
+.sm-footer strong span {
+    color: #D8323B;
 }
 
 @media (max-width: 700px) {
@@ -392,6 +396,32 @@ button[kind="primary"] {
         display: none;
     }
 }
+/* Optional polish: keyboard focus, compact status labels and mobile spacing. */
+.sm-status {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin: 4px 0 10px;
+}
+.sm-status-local { background: #E7F3EF; color: #145C46; }
+.sm-status-elsewhere { background: #EAF3F9; color: #195779; }
+.sm-status-unavailable { background: #F3EDE2; color: #715020; }
+.sm-book-title { overflow-wrap: anywhere; }
+.sm-header a:focus-visible,
+.stButton button:focus-visible,
+[data-testid="stLinkButton"] a:focus-visible {
+    outline: 3px solid #147DAB;
+    outline-offset: 4px;
+}
+@media (max-width: 700px) {
+    .sm-title { font-size: 38px !important; }
+    .sm-header { gap: 12px; }
+    .sm-footer { margin-top: 28px; }
+    [class*="st-key-shelf_result_"] { padding: 16px !important; }
+}
+
 </style>
     """,
     unsafe_allow_html=True,
@@ -445,7 +475,7 @@ def render_hero(results=False):
         f'{first_line}<br>'
         f'<span class="sm-accent">{second_line}</span>'
         '</div>'
-        f'<div class="sm-description">{description}</div>'
+        f'<div class="sm-description">{escape(description)}</div>'
         '</div>'
     )
 
@@ -597,12 +627,7 @@ def render_result(book, position):
             st.caption(" · ".join(genres))
 
         st.divider()
-
-        
-        st.write(
-            "Readers who enjoyed your favourite books "
-            "also enjoyed this title."
-        )
+        # The shared explanation is already shown above the result grid.
 
         matching_genres = [
             genre
@@ -620,6 +645,20 @@ def render_result(book, position):
         total = int(book.get("total_copies") or 0)
         vpl_available = int(book.get("vpl_available_copies") or 0)
         branch = st.session_state.saved_branch or "Selected branch"
+
+        if available > 0:
+            status, status_class = "Available at your branch", "local"
+        elif vpl_available > 0:
+            status, status_class = "Available at another branch", "elsewhere"
+        elif total > 0:
+            status, status_class = "Currently checked out", "unavailable"
+        else:
+            status, status_class = "Not in this collection", "unavailable"
+        st.markdown(
+            f'<span class="sm-status sm-status-{status_class}">'
+            f'{escape(status)}</span>',
+            unsafe_allow_html=True,
+        )
 
         # Keep HTML flush-left: indented multi-line HTML gets rendered
         # as a Markdown code block in some Streamlit versions.
@@ -640,7 +679,7 @@ def render_result(book, position):
         st.markdown(availability_html, unsafe_allow_html=True)
 
         if total == 0:
-            st.caption("Not in the simulated VPL collection.")
+            st.caption("Not in this collection.")
         elif available == 0 and vpl_available > 0:
             st.caption(
                 "No copies currently available at your branch. "
@@ -648,11 +687,9 @@ def render_result(book, position):
             )
         elif vpl_available == 0:
             st.caption(
-                "All simulated copies are checked out. "
+                "All copies are currently checked out. "
                 "Check the catalogue for hold options."
             )
-
-        st.caption("Simulated inventory · Not live VPL data")
 
         st.link_button(
             "View in VPL catalogue ↗",
@@ -755,6 +792,12 @@ if st.session_state.view == "preferences":
 
             count = len(st.session_state.favourites)
             st.markdown(f"**Your favourites · {count}/5**")
+            st.progress(count / 5)
+            if 0 < count < 3:
+                remaining = 3 - count
+                st.caption(f"Add {remaining} more to get recommendations.")
+            elif count >= 3:
+                st.caption("Your reading list is ready. You can select up to five books.")
 
             if count == 0:
                 st.caption("Search above to start your list.")
@@ -849,6 +892,14 @@ if st.session_state.view == "preferences":
                 label_visibility="collapsed",
             )
 
+        missing_steps = []
+        if len(st.session_state.favourites) < 3:
+            missing_steps.append("select at least three favourite books")
+        if not st.session_state.saved_branch:
+            missing_steps.append("choose your branch")
+        if missing_steps:
+            st.caption("To continue, " + " and ".join(missing_steps) + ".")
+
         if st.button(
             "Find my next read →",
             type="primary",
@@ -925,6 +976,10 @@ else:
             "Check the catalogue before visiting."
         )
 
+    with st.expander("Your selected favourites", expanded=False):
+        for favourite in st.session_state.favourites.values():
+            show_book_name(favourite)
+
     branch_column, priority_column = st.columns(2)
 
     with branch_column:
@@ -953,7 +1008,8 @@ else:
     if not recommendations:
         st.warning(
             "No recommendations were returned. "
-            "Try changing your preferences."
+            "Try Best Matches to include books that are currently checked out, "
+            "or choose different favourite books."
         )
 
         if st.button("Change preferences"):
@@ -979,7 +1035,7 @@ else:
 
 st.markdown(
     '<div class="sm-footer">'
-    '<strong>ShelfMatch</strong>'
+    '<strong>Shelf<span>Match</span></strong>'
     '<span>An independent project for Vancouver readers.<br>'
     'Not affiliated with or endorsed by Vancouver Public Library.'
     '</span></div>',

@@ -147,26 +147,33 @@ def get_recommendations(
         holdings["branch"] == branch
     ].set_index("book_id")
 
-    # Only recommend locally available books if requested.
-     # Filter candidates based on the selected priority.
-    if priority in ("available", "any_available"):
-
-        if priority == "available":
-            availability_column = "available_copies"
-        else:
-            availability_column = "vpl_available_copies"
-
-        available_ids = branch_inventory.index[
-            branch_inventory[availability_column] > 0
+    # Determine which books are eligible for recommendation.
+    if priority == "available":
+        # Available at the selected branch.
+        eligible_ids = branch_inventory.index[
+            branch_inventory["available_copies"] > 0
         ].to_numpy()
 
-        available_mask = np.zeros(
-            len(scores), dtype=bool
-        )
+    elif priority == "any_available":
+        # Available somewhere in the VPL system.
+        eligible_ids = branch_inventory.index[
+            branch_inventory["vpl_available_copies"] > 0
+        ].to_numpy()
 
-        available_mask[available_ids - 1] = True
+    else:
+        # Best Matches: VPL must own at least one copy,
+        # even if all copies are currently checked out.
+        eligible_ids = branch_inventory.index[
+            branch_inventory["total_copies"] > 0
+        ].to_numpy()
 
-        scores[~available_mask] = -np.inf
+    eligible_mask = np.zeros(
+        len(scores), dtype=bool
+    )
+
+    eligible_mask[eligible_ids - 1] = True
+
+    scores[~eligible_mask] = -np.inf
 
 
     # 5. Rank books by their final recommendation scores.
